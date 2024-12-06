@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Dupong-Adventskalender</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-attachment: fixed;
+        }
+        .calendar-container {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .door {
+            width: 100%;
+            height: 80px;
+            background-color: #c41e3a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: transform 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .door-day {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            background: rgba(0,0,0,0.3);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .door:hover {
+            transform: scale(1.05);
+        }
+        .modal-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        .answer-btn {
+            margin: 10px;
+            padding: 10px;
+            width: 100%;
+        }
+        .btn-correct {
+            background-color: green !important;
+            color: white !important;
+        }
+        .btn-incorrect {
+            background-color: red !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4 text-white">Adventskalender</h1>
+            </div>
+        </div>
+        <div class="row" id="calendar-container"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="doorModal" tabindex="-1" aria-labelledby="doorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="doorModalLabel">Adventskalender Türchen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modal-image" src="" alt="Adventskalender Bild" class="modal-image mb-3">
+                    <p id="modal-text"></p>
+                    <div id="answer-container" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        // Daten für den Adventskalender
+        const adventData = [
+            { day: 1, image: "1.png", text: "Weihnachten erinnert mich an die Zeit, in der wir uns kennengelernt haben. Ich erinner mich an unser erstes Date auf dem Weihnachtsmarkt. Du hattest deine grüne Jacke an mit deinen New Balance Schuhen. Damals noch mit hellbraunen Haaren. Erinnerst du dich noch, was ich an hatte?" },
+            { 
+                day: 2, 
+                image: "2.png", 
+                text: "Wir beide sind wie Tee, heiß, beruhigend und voller Geschichten. Wusstest du, dass ich Tee eigentlich nicht mag? Ich mochte den erst seitdem wir den auf dem Weihnachtsmarkt zusammen getrunken haben. Aber weißt du welchen Tee wir getrunken haben? Welche ist meine Lieblingsteesorte?",
+                answers: [
+                    { 
+                        text: "Kamille", 
+                        correct: false,
+                        responseText: "Kamille? Nein, das war es nicht! Du kennst mich doch besser!"
+                    },
+                    { 
+                        text: "Pfefferminz", 
+                        correct: true,
+                        responseText: "Genau! Pfefferminztee war es. Der Tee, der unsere Herzen wärmt!"
+                    },
+                    { 
+                        text: "Kräutertee", 
+                        correct: false,
+                        responseText: "Kräutertee? Oh nein, das stimmt nicht. Du musst mich besser kennen!"
+                    }
+                ]
+            },
+            { 
+                day: 3, 
+                image: "3.jpg", 
+                text: "Die Fragen müssen jetzt ein bisschen schwer werden. Krass wenn du das beantworten kannst. Welche ist meine Lieblingsfruch?   ",
+                answers: [
+                    { 
+                        text: "Himbeeren", 
+                        correct: true,
+                        responseText: "Richtig Motherfucker"
+                    },
+                    { 
+                        text: "Mandarinen", 
+                        correct: false,
+                        responseText: "Platz 2"
+                    },
+                    { 
+                        text: "Blaubeeren", 
+                        correct: false,
+                        responseText: "Dachtest du wohl...."
+                    }
+                ]
+            },
+            
+            { 
+        day: 4, 
+        image: "4.png", 
+        text: "Gib mir den Blick wenn du sauer auf mich böse bist also so richtig. ",
+        specialAction: () => {
+            const modalText = document.getElementById('modal-text');
+            const answerContainer = document.getElementById('answer-container');
+            
+            // Clear previous content
+            answerContainer.innerHTML = '';
+            
+            // Create "Okay" button
+            const okayButton = document.createElement('button');
+            okayButton.textContent = "Okay";
+            okayButton.classList.add('btn', 'btn-outline-primary', 'answer-btn');
+            okayButton.onclick = () => {
+                // Show the link
+                modalText.innerHTML = `
+                    Hi:<br>
+                    <a href="https://elfyourself.oddcast.com/createyourown?mId=1005060&ss=1" target="_blank">Whoop Whoop</a>
+                `;
+                answerContainer.innerHTML = ''; // Clear the button after clicking
+            };
+            
+            answerContainer.appendChild(okayButton);
+        }
+    },
+    { day: 5, image: "5.png", text: "Wir beide sind ja lustig wa. Dann kriegst du heute eine Challenge. Wenn du die schaffst, dann kriegst du einen weiteren Punkt. Film dich dabei und ruf einen deiner Freunde an. Red mit der Person über alles mögliche auf Babysprache. Mindestens 1 Minute" },
+    // Rest of the days remain unchanged
+    ...Array.from({length: 20}, (_, i) => ({
+        day: i + 6, 
+        image: "chillguy.webp", 
+        text: "Der Tag ist noch nicht da, was suchst du hier du Schummler?"
+    }))
+];
+
+        function generateCalendar() {
+            const container = document.getElementById('calendar-container');
+            
+            // Always use a fixed order to prevent randomization
+            const sortedData = adventData.sort((a, b) => a.day - b.day);
+
+            sortedData.forEach(item => {
+                const col = document.createElement('div');
+                col.classList.add('col-3', 'mb-3');
+
+                const door = document.createElement('div');
+                door.classList.add('door', 'text-center', 'position-relative', 'available');
+                
+                const daySpan = document.createElement('span');
+                daySpan.classList.add('door-day');
+                daySpan.textContent = item.day;
+                door.appendChild(daySpan);
+
+                door.innerHTML += item.day;
+
+                // Always make the door clickable
+                door.onclick = () => openDoor(item);
+
+                col.appendChild(door);
+                container.appendChild(col);
+            });
+        }
+// Überarbeitete openDoor-Funktion
+function openDoor(item) {
+    const modalImage = document.getElementById('modal-image');
+    const modalText = document.getElementById('modal-text');
+    const answerContainer = document.getElementById('answer-container');
+
+    modalImage.src = item.image;
+    modalText.textContent = item.text;
+
+    // Clear previous answers
+    answerContainer.innerHTML = '';
+
+    // Execute special action if available (e.g., for Türchen 4)
+    if (item.specialAction) {
+        item.specialAction();
+    } else if (item.answers) {
+        // Add multiple choice answers if available
+        item.answers.forEach(answer => {
+            const btn = document.createElement('button');
+            btn.textContent = answer.text;
+            btn.classList.add('btn', 'btn-outline-primary', 'answer-btn');
+            btn.onclick = () => handleAnswer(answer, btn);
+            answerContainer.appendChild(btn);
+        });
+    }
+
+    const doorModal = new bootstrap.Modal(document.getElementById('doorModal'));
+    doorModal.show();
+}
+
+// Türchen wird bei onload generiert
+window.onload = generateCalendar;
+
+        function handleAnswer(answer, clickedButton) {
+            const answerContainer = document.getElementById('answer-container');
+            const modalText = document.getElementById('modal-text');
+
+            // Disable further clicks
+            const buttons = answerContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+            });
+
+            // Color the buttons based on correct/incorrect answer
+            buttons.forEach(btn => {
+                const buttonAnswer = answer.text === btn.textContent;
+                
+                if (buttonAnswer && answer.correct) {
+                    btn.classList.add('btn-correct');
+                } else if (buttonAnswer && !answer.correct) {
+                    btn.classList.add('btn-incorrect');
+                }
+            });
+
+            // Replace the text with the response text
+            modalText.textContent = answer.responseText;
+        }
+
+        window.onload = generateCalendar;
+    </script>
+</body>
+</html>
